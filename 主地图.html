@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2023年六大区域-省份人均GDP复合饼图</title>
+    <script src="https://cdn.bootcdn.net/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <style>
+        body { 
+            font-family: "Microsoft YaHei", sans-serif; 
+            background: #f8f8f8; 
+            margin: 0;
+            padding: 10px;
+            box-sizing: border-box;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chart-container { 
+            flex: 1;
+            width: 100%;
+            min-height: 500px;
+            background: #ffffff; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05); 
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 5px;
+                height: auto;
+                min-height: 100vh;
+            }
+            
+            .chart-container {
+                padding: 10px;
+                min-height: 450px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .chart-container {
+                padding: 8px;
+                min-height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gdpPieChart" class="chart-container"></div>
+
+    <script>
+        var myChart = echarts.init(document.getElementById('gdpPieChart'));
+
+        // 区域级数据
+        var areaData = [
+            { name: '华东', value: 118000 },
+            { name: '华南', value: 95000 },
+            { name: '华北', value: 105000 },
+            { name: '东北', value: 63000 },
+            { name: '华中', value: 72000 },
+            { name: '西部', value: 68000 }
+        ];
+
+        // 省份级数据
+        var provinceData = {
+            '华东': [
+                { name: '上海', value: 180479 },
+                { name: '江苏', value: 144390 },
+                { name: '浙江', value: 128820 },
+                { name: '安徽', value: 73603 },
+                { name: '福建', value: 126829 },
+                { name: '江西', value: 65567 },
+                { name: '山东', value: 86056 }
+            ],
+            '华南': [
+                { name: '广东', value: 101905 },
+                { name: '广西', value: 52271 },
+                { name: '海南', value: 66717 }
+            ],
+            '华北': [
+                { name: '北京', value: 190088 },
+                { name: '天津', value: 119414 },
+                { name: '河北', value: 60169 }
+            ],
+            '东北': [
+                { name: '辽宁', value: 79674 },
+                { name: '吉林', value: 56199 },
+                { name: '黑龙江', value: 52875 }
+            ],
+            '华中': [
+                { name: '河南', value: 62106 },
+                { name: '湖北', value: 89147 },
+                { name: '湖南', value: 73598 }
+            ],
+            '西部': [
+                { name: '重庆', value: 90663 },
+                { name: '四川', value: 67777 },
+                { name: '贵州', value: 52348 },
+                { name: '云南', value: 57143 },
+                { name: '陕西', value: 82864 }
+            ]
+        };
+
+        // 莫兰迪色系配色表
+        var colorConfig = {
+            '华东': {
+                main: '#E8C48E', // 暖杏色
+                sub: ['#F5D7A1', '#F9E2B5', '#FCE9C9', '#FFEFDD', '#FFF5F0', '#FFF9F5', '#FFFCF8']
+            },
+            '华南': {
+                main: '#8EB8E8', // 浅蓝灰
+                sub: ['#A1C4F5', '#B5D0F9', '#C9DBFC', '#DDE6FE', '#F0F5FF', '#F5F8FF', '#F8FAFF']
+            },
+            '华北': {
+                main: '#8EE8C4', // 薄荷绿
+                sub: ['#A1F5D7', '#B5F9E2', '#C9FCE9', '#DDFEEF', '#F0FFF5', '#F5FFFA', '#F8FFFC']
+            },
+            '东北': {
+                main: '#E88E8E', // 豆沙红
+                sub: ['#F5A1A1', '#F9B5B5', '#FCC9C9', '#FEDDDE', '#FFF0F0', '#FFF5F5', '#FFF8F8']
+            },
+            '华中': {
+                main: '#C48EE8', // 浅紫灰
+                sub: ['#D7A1F5', '#E2B5F9', '#E9C9FC', '#EFDDFF', '#F5F0FF', '#FAF5FF', '#FCF8FF']
+            },
+            '西部': {
+                main: '#8EE88E', // 浅草绿
+                sub: ['#A1F5A1', '#B5F9B5', '#C9FCC9', '#DDFEDD', '#F0FFF0', '#F5FFF5', '#F8FFF8']
+            }
+        };
+
+        // 动态计算图表配置
+        function createOption(isProvinceView, currentArea) {
+            var containerWidth = document.getElementById('gdpPieChart').offsetWidth;
+            var containerHeight = document.getElementById('gdpPieChart').offsetHeight;
+            
+            // 根据容器大小动态调整
+            var isSmallScreen = containerWidth < 600;
+            var titleFontSize = Math.max(14, Math.min(20, containerWidth / 30));
+            var labelFontSize = Math.max(10, Math.min(14, containerWidth / 50));
+            var legendFontSize = Math.max(9, Math.min(12, containerWidth / 60));
+            
+            // 根据屏幕大小调整图例位置和饼图半径
+            var legendOrient = isSmallScreen ? 'horizontal' : 'vertical';
+            var legendLeft = isSmallScreen ? 'center' : 10;
+            var legendTop = isSmallScreen ? 'bottom' : 'center';
+            var legendBottom = isSmallScreen ? 10 : undefined;
+            var pieRadius = isSmallScreen ? ['25%', '60%'] : ['30%', '70%'];
+            
+            if (isProvinceView && currentArea) {
+                pieRadius = isSmallScreen ? ['30%', '65%'] : ['40%', '70%'];
+            }
+            
+            return {
+                title: {
+                    text: isProvinceView ? `${currentArea}省份人均GDP分布` : '2023年中国六大区域-省份人均GDP分布',
+                    left: 'center',
+                    textStyle: { 
+                        fontSize: titleFontSize, 
+                        fontWeight: 'bold', 
+                        color: '#333' 
+                    },
+                    top: 10,
+                    subtext: isProvinceView ? '点击任意位置返回区域视图' : '点击区域查看省份详情',
+                    subtextStyle: { 
+                        fontSize: Math.max(9, titleFontSize - 4), 
+                        color: '#999' 
+                    }
+                },
+                tooltip: {
+                    trigger: 'item',
+                    formatter: function(params) {
+                        return `<b>${params.name}</b><br/>人均GDP：${params.value.toLocaleString()} 元/人`;
+                    },
+                    textStyle: { fontSize: labelFontSize },
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    borderColor: '#eee',
+                    borderWidth: 1
+                },
+                legend: {
+                    orient: legendOrient,
+                    left: legendLeft,
+                    top: legendTop,
+                    bottom: legendBottom,
+                    textStyle: { 
+                        fontSize: legendFontSize, 
+                        color: '#666' 
+                    },
+                    data: isProvinceView ? 
+                        provinceData[currentArea].map(item => item.name) : 
+                        areaData.map(item => item.name),
+                    itemWidth: 12,
+                    itemHeight: 8,
+                    itemGap: 5
+                },
+                series: [{
+                    name: '人均GDP',
+                    type: 'pie',
+                    radius: pieRadius,
+                    center: ['50%', isSmallScreen ? '45%' : '55%'],
+                    data: isProvinceView ? provinceData[currentArea] : areaData,
+                    itemStyle: {
+                        borderRadius: 6,
+                        shadowBlur: 3,
+                        shadowColor: 'rgba(0,0,0,0.08)',
+                        color: function(params) {
+                            if (isProvinceView) {
+                                return colorConfig[currentArea].sub[params.dataIndex] || colorConfig[currentArea].main;
+                            } else {
+                                return colorConfig[params.name].main;
+                            }
+                        }
+                    },
+                    label: {
+                        show: true,
+                        fontSize: labelFontSize,
+                        color: '#555',
+                        formatter: isSmallScreen ? '{b}: {c}' : '{b}'
+                    },
+                    emphasis: {
+                        focus: 'self',
+                        itemStyle: { shadowBlur: 8, shadowColor: 'rgba(0,0,0,0.15)' }
+                    },
+                    avoidLabelOverlap: !isSmallScreen,
+                    labelLine: {
+                        length: isSmallScreen ? 5 : 10,
+                        length2: isSmallScreen ? 5 : 10
+                    }
+                }]
+            };
+        }
+
+        var currentArea = '';
+        var isProvinceView = false;
+        
+        function renderChart() {
+            myChart.setOption(createOption(isProvinceView, currentArea), true);
+        }
+        
+        renderChart();
+
+        myChart.on('click', function(params) {
+            // 1. 未选中区域时，点击区域→显示省份
+            if (!isProvinceView && areaData.some(item => item.name === params.name)) {
+                currentArea = params.name;
+                isProvinceView = true;
+                renderChart();
+            } 
+            // 2. 已选中区域时，点击任意位置→返回区域
+            else {
+                currentArea = '';
+                isProvinceView = false;
+                renderChart();
+            }
+        });
+
+        // 窗口缩放时自适应
+        var resizeTimer;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(function() {
+                myChart.resize();
+                renderChart();
+            }, 200);
+        });
+        
+        // 监听容器大小变化
+        var chartContainer = document.getElementById('gdpPieChart');
+        if (typeof ResizeObserver !== 'undefined') {
+            var observer = new ResizeObserver(function() {
+                myChart.resize();
+                renderChart();
+            });
+            observer.observe(chartContainer);
+        }
+    </script>
+</body>
+</html>

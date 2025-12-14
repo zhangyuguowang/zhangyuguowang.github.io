@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人口密度Top10省份 - 2023年</title>
+    <!-- 引入ECharts CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <style>
+        body { 
+            font-family: "Microsoft YaHei", sans-serif; 
+            background: #f5f5f0; 
+            margin: 0;
+            padding: 10px;
+            box-sizing: border-box;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chart-container {
+            flex: 1;
+            width: 100%;
+            min-height: 400px;
+            background: #ffffff; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05); 
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 5px;
+                height: auto;
+                min-height: 100vh;
+            }
+            
+            .chart-container {
+                padding: 10px;
+                min-height: 350px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .chart-container {
+                padding: 8px;
+                min-height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="densityChart" class="chart-container"></div>
+
+    <script>
+        // 初始化图表
+        var myChart = echarts.init(document.getElementById('densityChart'));
+
+        // 数据来源：你的Excel表格（提取人口密度Top10省份）
+        var data = {
+            provinces: ['澳门', '香港', '上海', '北京', '天津', '江苏', '广东', '浙江', '山东', '河南'],
+            density: [20718.18, 6730.79, 2975.83, 1332.32, 1144.58, 799.81, 707.24, 628.12, 641.10, 592.46]
+        };
+
+        // 动态计算图表配置
+        function createOption() {
+            var containerWidth = document.getElementById('densityChart').offsetWidth;
+            var containerHeight = document.getElementById('densityChart').offsetHeight;
+            
+            // 根据容器大小动态调整
+            var isSmallScreen = containerWidth < 600;
+            var titleFontSize = Math.max(14, Math.min(20, containerWidth / 30));
+            var labelFontSize = Math.max(10, Math.min(14, containerWidth / 40));
+            var barWidth = isSmallScreen ? '40%' : '60%';
+            var rotateAngle = isSmallScreen ? 45 : 30;
+            
+            return {
+                title: {
+                    text: '2023年中国各省份人口密度Top10',
+                    subtext: '单位：人/平方公里',
+                    left: 'center',
+                    textStyle: { fontSize: titleFontSize, fontWeight: 'bold' },
+                    subtextStyle: { fontSize: labelFontSize - 2, color: '#666' },
+                    top: 10
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: { type: 'shadow' },
+                    formatter: '{b}<br/>人口密度：{c} 人/平方公里'
+                },
+                grid: { 
+                    left: isSmallScreen ? '12%' : '5%', 
+                    right: '5%', 
+                    bottom: isSmallScreen ? '20%' : '10%', 
+                    top: isSmallScreen ? '20%' : '15%',
+                    containLabel: true 
+                },
+                xAxis: {
+                    type: 'category',
+                    data: data.provinces,
+                    axisLabel: { 
+                        rotate: rotateAngle, 
+                        interval: 0,
+                        fontSize: labelFontSize - 2
+                    },
+                    axisLine: { lineStyle: { color: '#ddd' } }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '人口密度（人/平方公里）',
+                    nameTextStyle: { 
+                        color: '#666',
+                        fontSize: labelFontSize - 2
+                    },
+                    axisLine: { lineStyle: { color: '#ddd' } },
+                    splitLine: { lineStyle: { color: '#f5f5f5' } },
+                    axisLabel: {
+                        fontSize: labelFontSize - 2
+                    }
+                },
+                series: [{
+                    name: '人口密度',
+                    type: 'bar',
+                    data: data.density,
+                    barWidth: barWidth,
+                    itemStyle: {
+                        color: function(params) {
+                            var colorList = ['#e0f7fa', '#b2ebf2', '#80deea', '#4dd0e1', '#26c6da', 
+                                           '#00bcd4', '#00acc1', '#0097a7', '#00838f', '#006064'];
+                            return colorList[params.dataIndex];
+                        },
+                        borderRadius: [4, 4, 0, 0]
+                    },
+                    emphasis: {
+                        itemStyle: { shadowBlur: 8, shadowColor: 'rgba(0,188,212,0.3)' }
+                    },
+                    label: {
+                        show: !isSmallScreen,
+                        position: 'top',
+                        fontSize: labelFontSize - 2,
+                        formatter: function(params) {
+                            return params.value.toFixed(0);
+                        }
+                    }
+                }]
+            };
+        }
+
+        // 渲染图表
+        function renderChart() {
+            myChart.setOption(createOption(), true);
+        }
+        
+        renderChart();
+        
+        // 窗口缩放时自适应
+        var resizeTimer;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(function() {
+                myChart.resize();
+                renderChart();
+            }, 200);
+        });
+        
+        // 监听容器大小变化
+        var chartContainer = document.getElementById('densityChart');
+        if (typeof ResizeObserver !== 'undefined') {
+            var observer = new ResizeObserver(function() {
+                myChart.resize();
+                renderChart();
+            });
+            observer.observe(chartContainer);
+        }
+    </script>
+</body>
+</html>

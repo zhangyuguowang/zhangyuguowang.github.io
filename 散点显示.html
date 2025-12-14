@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>中国各省份人均GDP散点图测试</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts/map/js/china.js"></script>
+  <style>
+    body {
+      font-family: "Microsoft YaHei", sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+    #map {
+      width: 1000px;
+      height: 600px;
+      margin: 20px auto;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>中国各省份人均GDP散点图测试</h1>
+  <div id="map"></div>
+
+  <script>
+    // 1. 初始化图表
+    var myChart = echarts.init(document.getElementById('map'));
+
+    // 2. 基础数据
+    var densityData = [
+      { name: '北京', value: 1332.32, gdp: 200204.50, center: [116.46, 39.92] },
+      { name: '天津', value: 1144.58, gdp: 122707.48, center: [117.2, 39.13] },
+      { name: '河北', value: 392.11, gdp: 59440.15, center: [114.48, 38.03] },
+      { name: '山西', value: 221.19, gdp: 74143.84, center: [112.53, 37.87] },
+      { name: '内蒙古', value: 20.92, gdp: 102783.81, center: [111.65, 40.82] },
+      { name: '辽宁', value: 281.85, gdp: 72236.73, center: [123.43, 41.8] },
+      { name: '吉林', value: 122.35, gdp: 57840.43, center: [125.35, 43.88] },
+      { name: '黑龙江', value: 67.66, gdp: 51874.27, center: [126.63, 45.75] },
+      { name: '上海', value: 2975.83, gdp: 189823.76, center: [121.48, 31.22] },
+      { name: '江苏', value: 799.81, gdp: 150389.63, center: [118.78, 32.04] },
+      { name: '浙江', value: 628.12, gdp: 124570.70, center: [120.19, 30.26] },
+      { name: '安徽', value: 436.78, gdp: 76867.51, center: [117.27, 31.86] },
+      { name: '福建', value: 337.47, gdp: 129942.62, center: [119.3, 26.08] },
+      { name: '江西', value: 270.46, gdp: 71317.89, center: [115.85, 28.68] },
+      { name: '山东', value: 641.10, gdp: 90950.58, center: [117.0, 36.65] },
+      { name: '河南', value: 592.46, gdp: 60246.96, center: [113.65, 34.76] },
+      { name: '湖北', value: 313.98, gdp: 95586.90, center: [114.31, 30.52] },
+      { name: '湖南', value: 310.05, gdp: 76146.24, center: [113.0, 28.21] },
+      { name: '广东', value: 707.24, gdp: 106778.81, center: [113.23, 23.16] },
+      { name: '广西', value: 211.57, gdp: 54112.57, center: [108.33, 22.84] },
+      { name: '海南', value: 296.56, gdp: 72384.08, center: [110.35, 20.02] },
+      { name: '重庆', value: 387.43, gdp: 94458.57, center: [106.55, 29.57] },
+      { name: '四川', value: 172.14, gdp: 71860.54, center: [104.06, 30.67] },
+      { name: '贵州', value: 219.48, gdp: 54109.31, center: [106.71, 26.57] },
+      { name: '云南', value: 121.95, gdp: 64243.53, center: [102.73, 25.04] },
+      { name: '西藏', value: 3.04, gdp: 65552.60, center: [91.11, 29.97] },
+      { name: '陕西', value: 192.20, gdp: 85491.07, center: [108.95, 34.27] },
+      { name: '甘肃', value: 57.89, gdp: 48119.64, center: [103.73, 36.03] },
+      { name: '青海', value: 8.53, gdp: 63957.91, center: [101.74, 36.56] },
+      { name: '宁夏', value: 140.48, gdp: 72908.09, center: [106.27, 38.47] },
+      { name: '新疆', value: 15.92, gdp: 73617.82, center: [87.68, 43.77] },
+      { name: '香港', value: 6730.79, gdp: 359117.64, center: [114.17, 22.28] },
+      { name: '澳门', value: 20718.18, gdp: 483984.20, center: [113.55, 22.19] },
+      { name: '台湾', value: 647.03, gdp: 227467.53, center: [121.5, 25.03] }
+    ];
+
+    // 3. 计算圆点大小
+    function getPointSize(gdpValue) {
+      const minGdp = 48000;
+      const maxGdp = 485000;
+      const normalized = (gdpValue - minGdp) / (maxGdp - minGdp);
+      return normalized * 30 + 10; // 10到40的大小范围
+    }
+
+    // 4. 准备散点图数据 - 使用经纬度坐标
+    var pointData = [];
+    densityData.forEach(item => {
+      if (item.center) {
+        pointData.push({
+          name: item.name,
+          value: item.center.concat([item.gdp]), // [经度, 纬度, GDP值]
+          gdp: item.gdp
+        });
+      }
+    });
+
+    // 5. 配置选项
+    var option = {
+      title: {
+        text: '中国各省份人均GDP散点图',
+        left: 'center',
+        top: 10,
+        textStyle: { fontSize: 18, fontWeight: 'bold' }
+      },
+      tooltip: {
+        trigger: 'item',
+        formatter: function(params) {
+          return params.name + '<br/>人均GDP: ' + params.data.gdp.toLocaleString() + ' 元<br/>' +
+                 '圆点大小: ' + Math.round(getPointSize(params.data.gdp)) + ' 像素';
+        }
+      },
+      visualMap: {
+        type: 'continuous',
+        min: 48000,
+        max: 485000,
+        left: 20,
+        bottom: 20,
+        text: ['高人均GDP', '低人均GDP'],
+        textStyle: { fontSize: 12, color: '#333' },
+        orient: 'vertical',
+        inRange: {
+          color: ['#0099FF', '#33CC33', '#FFFF00', '#FF9900', '#FF3333']
+        },
+        calculable: true
+      },
+      geo: {
+        map: 'china',
+        roam: false,
+        label: {
+          show: true,
+          fontSize: 10
+        },
+        itemStyle: {
+          normal: {
+            areaColor: '#f0f0f0',
+            borderColor: '#ccc',
+            borderWidth: 1
+          },
+          emphasis: {
+            areaColor: '#ffcc00'
+          }
+        }
+      },
+      series: [
+        {
+          name: '中国地图',
+          type: 'map',
+          map: 'china',
+          data: densityData,
+          label: {
+            show: true,
+            fontSize: 10
+          },
+          itemStyle: {
+            borderColor: '#fff',
+            borderWidth: 1,
+            areaColor: '#f0f0f0'
+          },
+          emphasis: {
+            itemStyle: {
+              areaColor: '#e0e0e0',
+              borderColor: '#333',
+              borderWidth: 2
+            }
+          }
+        },
+        {
+          name: '人均GDP',
+          type: 'scatter',
+          coordinateSystem: 'geo',
+          symbol: 'circle',
+          symbolSize: function(data) {
+            return getPointSize(data[2]); 
+          },
+          data: pointData,
+          itemStyle: {
+            color: 'rgba(255,69,0,0.7)',
+            borderColor: '#fff',
+            borderWidth: 2
+          },
+          emphasis: {
+            itemStyle: {
+              color: 'rgba(255,0,0,0.9)',
+              borderColor: '#fff',
+              borderWidth: 3
+            }
+          },
+          zlevel: 10
+        }
+      ]
+    };
+
+    // 6. 渲染图表
+    myChart.setOption(option);
+
+    // 7. 添加点击事件查看数据
+    myChart.on('click', function(params) {
+      if (params.componentType === 'series' && params.seriesType === 'scatter') {
+        console.log('点击了散点:', params);
+      }
+    });
+
+    // 8. 窗口自适应
+    window.addEventListener('resize', function() {
+      myChart.resize();
+    });
+
+    // 9. 添加调试信息
+    console.log('散点数据:', pointData);
+    console.log('散点数量:', pointData.length);
+    
+    // 测试单独显示几个散点
+    setTimeout(function() {
+      // 显示前5个散点的信息
+      for (var i = 0; i < Math.min(5, pointData.length); i++) {
+        console.log('散点' + (i+1) + ':', 
+          '名称:' + pointData[i].name, 
+          '坐标:' + pointData[i].value[0] + ',' + pointData[i].value[1],
+          'GDP:' + pointData[i].gdp,
+          '大小:' + getPointSize(pointData[i].gdp));
+      }
+    }, 1000);
+  </script>
+</body>
+</html>
