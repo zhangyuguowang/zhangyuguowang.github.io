@@ -12,45 +12,35 @@
             margin: 0;
             padding: 10px;
             box-sizing: border-box;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
         }
         
-        .chart-container { 
-            flex: 1;
+        #gdpPieChart { 
             width: 100%;
-            min-height: 500px;
+            height: 500px;
             background: #ffffff; 
             border-radius: 8px; 
             box-shadow: 0 2px 6px rgba(0,0,0,0.05); 
-            padding: 15px;
+            padding: 10px;
             box-sizing: border-box;
         }
         
         @media (max-width: 768px) {
-            body {
-                padding: 5px;
-                height: auto;
-                min-height: 100vh;
-            }
-            
-            .chart-container {
-                padding: 10px;
-                min-height: 450px;
+            #gdpPieChart {
+                height: 400px;
+                padding: 8px;
             }
         }
         
         @media (max-width: 480px) {
-            .chart-container {
-                padding: 8px;
-                min-height: 400px;
+            #gdpPieChart {
+                height: 350px;
+                padding: 5px;
             }
         }
     </style>
 </head>
 <body>
-    <div id="gdpPieChart" class="chart-container"></div>
+    <div id="gdpPieChart"></div>
 
     <script>
         var myChart = echarts.init(document.getElementById('gdpPieChart'));
@@ -133,150 +123,115 @@
             }
         };
 
-        // 动态计算图表配置
-        function createOption(isProvinceView, currentArea) {
-            var containerWidth = document.getElementById('gdpPieChart').offsetWidth;
-            var containerHeight = document.getElementById('gdpPieChart').offsetHeight;
-            
-            // 根据容器大小动态调整
-            var isSmallScreen = containerWidth < 600;
-            var titleFontSize = Math.max(14, Math.min(20, containerWidth / 30));
-            var labelFontSize = Math.max(10, Math.min(14, containerWidth / 50));
-            var legendFontSize = Math.max(9, Math.min(12, containerWidth / 60));
-            
-            // 根据屏幕大小调整图例位置和饼图半径
-            var legendOrient = isSmallScreen ? 'horizontal' : 'vertical';
-            var legendLeft = isSmallScreen ? 'center' : 10;
-            var legendTop = isSmallScreen ? 'bottom' : 'center';
-            var legendBottom = isSmallScreen ? 10 : undefined;
-            var pieRadius = isSmallScreen ? ['25%', '60%'] : ['30%', '70%'];
-            
-            if (isProvinceView && currentArea) {
-                pieRadius = isSmallScreen ? ['30%', '65%'] : ['40%', '70%'];
-            }
-            
-            return {
-                title: {
-                    text: isProvinceView ? `${currentArea}省份人均GDP分布` : '2023年中国六大区域-省份人均GDP分布',
-                    left: 'center',
-                    textStyle: { 
-                        fontSize: titleFontSize, 
-                        fontWeight: 'bold', 
-                        color: '#333' 
-                    },
-                    top: 10,
-                    subtext: isProvinceView ? '点击任意位置返回区域视图' : '点击区域查看省份详情',
-                    subtextStyle: { 
-                        fontSize: Math.max(9, titleFontSize - 4), 
-                        color: '#999' 
+        // 初始配置 - 保持原配置，只修改自适应相关部分
+        var option = {
+            title: {
+                text: '2023年中国六大区域-省份人均GDP分布',
+                left: 'center',
+                textStyle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
+                top: 10,
+                subtext: '点击区域查看省份详情',
+                subtextStyle: { fontSize: 10, color: '#999' }
+            },
+            tooltip: {
+                trigger: 'item',
+                formatter: function(params) {
+                    return `<b>${params.name}</b><br/>人均GDP：${params.value.toLocaleString()} 元/人`;
+                },
+                textStyle: { fontSize: 12 },
+                backgroundColor: 'rgba(255,255,255,0.9)',
+                borderColor: '#eee',
+                borderWidth: 1
+            },
+            legend: {
+                orient: 'vertical',
+                left: 10,
+                top: 'center',
+                textStyle: { fontSize: 11, color: '#666' },
+                data: areaData.map(item => item.name)
+            },
+            series: [{
+                name: '人均GDP',
+                type: 'pie',
+                radius: ['30%', '70%'],
+                center: ['50%', '55%'],
+                data: areaData,
+                itemStyle: {
+                    borderRadius: 6,
+                    shadowBlur: 3,
+                    shadowColor: 'rgba(0,0,0,0.08)',
+                    // 区域层用莫兰迪主色
+                    color: function(params) {
+                        return colorConfig[params.name].main;
                     }
                 },
-                tooltip: {
-                    trigger: 'item',
-                    formatter: function(params) {
-                        return `<b>${params.name}</b><br/>人均GDP：${params.value.toLocaleString()} 元/人`;
-                    },
-                    textStyle: { fontSize: labelFontSize },
-                    backgroundColor: 'rgba(255,255,255,0.9)',
-                    borderColor: '#eee',
-                    borderWidth: 1
+                label: {
+                    show: true,
+                    fontSize: 11,
+                    color: '#555',
+                    formatter: '{b}'
                 },
-                legend: {
-                    orient: legendOrient,
-                    left: legendLeft,
-                    top: legendTop,
-                    bottom: legendBottom,
-                    textStyle: { 
-                        fontSize: legendFontSize, 
-                        color: '#666' 
-                    },
-                    data: isProvinceView ? 
-                        provinceData[currentArea].map(item => item.name) : 
-                        areaData.map(item => item.name),
-                    itemWidth: 12,
-                    itemHeight: 8,
-                    itemGap: 5
+                emphasis: {
+                    focus: 'self',
+                    itemStyle: { shadowBlur: 8, shadowColor: 'rgba(0,0,0,0.15)' }
                 },
-                series: [{
-                    name: '人均GDP',
-                    type: 'pie',
-                    radius: pieRadius,
-                    center: ['50%', isSmallScreen ? '45%' : '55%'],
-                    data: isProvinceView ? provinceData[currentArea] : areaData,
-                    itemStyle: {
-                        borderRadius: 6,
-                        shadowBlur: 3,
-                        shadowColor: 'rgba(0,0,0,0.08)',
-                        color: function(params) {
-                            if (isProvinceView) {
-                                return colorConfig[currentArea].sub[params.dataIndex] || colorConfig[currentArea].main;
-                            } else {
-                                return colorConfig[params.name].main;
-                            }
-                        }
-                    },
-                    label: {
-                        show: true,
-                        fontSize: labelFontSize,
-                        color: '#555',
-                        formatter: isSmallScreen ? '{b}: {c}' : '{b}'
-                    },
-                    emphasis: {
-                        focus: 'self',
-                        itemStyle: { shadowBlur: 8, shadowColor: 'rgba(0,0,0,0.15)' }
-                    },
-                    avoidLabelOverlap: !isSmallScreen,
-                    labelLine: {
-                        length: isSmallScreen ? 5 : 10,
-                        length2: isSmallScreen ? 5 : 10
-                    }
-                }]
-            };
-        }
+                avoidLabelOverlap: false
+            }]
+        };
+
+        myChart.setOption(option);
 
         var currentArea = '';
-        var isProvinceView = false;
-        
-        function renderChart() {
-            myChart.setOption(createOption(isProvinceView, currentArea), true);
-        }
-        
-        renderChart();
-
         myChart.on('click', function(params) {
             // 1. 未选中区域时，点击区域→显示省份
-            if (!isProvinceView && areaData.some(item => item.name === params.name)) {
+            if (!currentArea && areaData.some(item => item.name === params.name)) {
                 currentArea = params.name;
-                isProvinceView = true;
-                renderChart();
+                myChart.setOption({
+                    title: {
+                        subtext: `当前查看：${currentArea}省份详情（点击任意省份返回上层）`
+                    },
+                    legend: {
+                        data: provinceData[currentArea].map(item => item.name)
+                    },
+                    series: [{
+                        data: provinceData[currentArea],
+                        radius: ['40%', '70%'],
+                        itemStyle: {
+                            // 省份层用对应区域的辅色，保证区分度
+                            color: function(p) {
+                                return colorConfig[currentArea].sub[p.dataIndex] || colorConfig[currentArea].main;
+                            }
+                        }
+                    }]
+                });
             } 
             // 2. 已选中区域时，点击任意位置→返回区域
             else {
                 currentArea = '';
-                isProvinceView = false;
-                renderChart();
+                myChart.setOption({
+                    title: {
+                        subtext: '点击区域查看省份详情'
+                    },
+                    legend: {
+                        data: areaData.map(item => item.name)
+                    },
+                    series: [{
+                        data: areaData,
+                        radius: ['30%', '70%'],
+                        itemStyle: {
+                            color: function(params) {
+                                return colorConfig[params.name].main;
+                            }
+                        }
+                    }]
+                });
             }
         });
 
-        // 窗口缩放时自适应
-        var resizeTimer;
+        // 仅保留窗口resize自适应
         window.addEventListener('resize', function() {
-            clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(function() {
-                myChart.resize();
-                renderChart();
-            }, 200);
+            myChart.resize();
         });
-        
-        // 监听容器大小变化
-        var chartContainer = document.getElementById('gdpPieChart');
-        if (typeof ResizeObserver !== 'undefined') {
-            var observer = new ResizeObserver(function() {
-                myChart.resize();
-                renderChart();
-            });
-            observer.observe(chartContainer);
-        }
     </script>
 </body>
 </html>
